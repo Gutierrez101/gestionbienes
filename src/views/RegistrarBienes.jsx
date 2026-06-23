@@ -1,24 +1,55 @@
-import { useMemo, useState } from 'react';
-
-const bienesIniciales = [
-  { id: 1, codigo: 'SIL-001', serie: 'SR-2026-001', modelo: 'Ergo Pro', marca: 'OfficeLine', ubicacion: 'Sala 1', custodio: 'Carlos Viteri' },
-  { id: 2, codigo: 'SIL-002', serie: 'SR-2026-002', modelo: 'Fold Basic', marca: 'OfficeLine', ubicacion: 'Sala 2', custodio: 'Ana Torres' },
-  { id: 3, codigo: 'MES-010', serie: 'MT-2026-010', modelo: 'Work Mod', marca: 'Mobiliario ESPE', ubicacion: 'Sala 3', custodio: 'Luis Gomez' },
-  { id: 4, codigo: 'TAB-005', serie: 'TB-2026-005', modelo: 'Lab Stool', marca: 'LabTec', ubicacion: 'Laboratorio 1', custodio: 'Marta Rios' },
-];
+import { useMemo, useState, useEffect } from 'react';
 
 export default function AdministrarBienes() {
-  const [bienes, setBienes] = useState(bienesIniciales);
+  const [bienes, setBienes] = useState([]);
   const [busqueda, setBusqueda] = useState('');
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [editandoId, setEditandoId] = useState(null);
-  
-  // ESTADO NUEVO: Controla qué bien se va a eliminar para mostrar el modal
   const [bienAEliminar, setBienAEliminar] = useState(null);
   
   const [formData, setFormData] = useState({
     codigo: '', serie: '', modelo: '', marca: '', ubicacion: '', custodio: ''
   });
+
+  const token = localStorage.getItem('token');
+  const userRol=localStorage.getItem('rol');
+
+  if(userRol!=='Administrador')
+  {
+    return (
+      <div className="view-card" style={{ textAlign: 'center', marginTop: '40px', padding: '40px' }}>
+        <div style={{ fontSize: '50px', marginBottom: '15px' }}>🔒</div>
+        <h2 style={{ color: 'var(--espe-red)', fontWeight: '700' }}>Acceso Restringido</h2>
+        <p style={{ color: '#5f6f68', margin: '10px 0 25px' }}>
+          Su cuenta tiene rol de <strong>Docente</strong>. Solo los Administradores pueden registrar o editar bienes.
+        </p>
+      </div>
+    );
+  }
+
+  const fetchBienes = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/api/bienes/', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setBienes(data);
+      }
+    } catch (error) {
+      console.error('Error al conectar con Django:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchBienes();
+    }
+  }, [token]);
 
   const bienesFiltrados = useMemo(() => {
     const texto = busqueda.trim().toLowerCase();
@@ -38,36 +69,68 @@ export default function AdministrarBienes() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleGuardar = () => {
+  const handleGuardar = async () => {
     if (!formData.codigo || !formData.serie || !formData.modelo || !formData.marca || !formData.ubicacion || !formData.custodio) {
       alert('Por favor completa todos los campos, incluyendo el custodio.');
       return;
     }
 
-    if (editandoId) {
-      setBienes(bienes.map(bien => bien.id === editandoId ? { ...bien, ...formData } : bien ));
-      setEditandoId(null);
-    } else {
-      const nuevoId = Math.max(...bienes.map(b => b.id), 0) + 1;
-      setBienes([...bienes, { id: nuevoId, ...formData }]);
+    try {
+      const url = editandoId 
+        ? `http://localhost:8000/api/bienes/${editandoId}/` 
+        : 'http://localhost:8000/api/bienes/';
+      const method = editandoId ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        fetchBienes();
+        setEditandoId(null);
+        setFormData({ codigo: '', serie: '', modelo: '', marca: '', ubicacion: '', custodio: '' });
+        setMostrarFormulario(false);
+      } else {
+        alert('Error al guardar. Verifica que el Código no esté duplicado.');
+      }
+    } catch (error) {
+      console.error('Error al guardar:', error);
     }
-    setFormData({ codigo: '', serie: '', modelo: '', marca: '', ubicacion: '', custodio: '' });
-    setMostrarFormulario(false);
   };
 
   const handleEditar = (bien) => {
-    setFormData(bien); setEditandoId(bien.id); setMostrarFormulario(true);
+    setFormData(bien); 
+    setEditandoId(bien.id);
+    setMostrarFormulario(true);
   };
 
-  // Función que ABRE el modal en lugar de usar confirm()
   const prepararEliminacion = (bien) => {
     setBienAEliminar(bien);
   };
 
-  // Función que EJECUTA el borrado real y cierra el modal
-  const confirmarEliminacion = () => {
-    setBienes(bienes.filter(bien => bien.id !== bienAEliminar.id));
-    setBienAEliminar(null); // Cierra el modal
+  const confirmarEliminacion = async () => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/bienes/${bienAEliminar.id}/`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Token ${token}`
+        }
+      });
+
+      if (response.ok) {
+        fetchBienes();
+        setBienAEliminar(null);
+      } else {
+        alert('Error al eliminar el registro.');
+      }
+    } catch (error) {
+      console.error('Error al eliminar:', error);
+    }
   };
 
   return (
@@ -85,7 +148,13 @@ export default function AdministrarBienes() {
           <label>Buscar por código, ubicación o custodio</label>
           <input type="text" value={busqueda} placeholder="Ej: SIL-001, Carlos Viteri" onChange={(e) => setBusqueda(e.target.value)} />
         </div>
-        <button className="btn-primary" onClick={() => setMostrarFormulario(!mostrarFormulario)}>
+        <button className="btn-primary" onClick={() => {
+          setMostrarFormulario(!mostrarFormulario);
+          if (mostrarFormulario) {
+            setEditandoId(null);
+            setFormData({ codigo: '', serie: '', modelo: '', marca: '', ubicacion: '', custodio: '' });
+          }
+        }}>
           {mostrarFormulario ? 'Cancelar' : '+ Registrar nuevo bien'}
         </button>
       </div>
@@ -102,7 +171,7 @@ export default function AdministrarBienes() {
               <div className="form-group"><label>Ubicación *</label><input type="text" name="ubicacion" value={formData.ubicacion} onChange={handleInputChange} /></div>
               <div className="form-group"><label>Custodio Asignado *</label><input type="text" name="custodio" value={formData.custodio} onChange={handleInputChange} placeholder="Nombre de la persona responsable"/></div>
             </div>
-            <button type="button" className="btn-primary" onClick={handleGuardar}>Guardar</button>
+            <button type="button" className="btn-primary" onClick={handleGuardar}>Guardar en BD</button>
           </form>
         </div>
       )}
@@ -135,13 +204,17 @@ export default function AdministrarBienes() {
                     <button className="btn-small btn-edit" onClick={() => handleEditar(bien)} title="Editar bien">
                       Editar
                     </button>
-                    {/* Al dar clic aquí, abrimos el modal pasándole la info del bien */}
                     <button className="btn-small btn-delete" onClick={() => prepararEliminacion(bien)} title="Eliminar bien">
                       Borrar
                     </button>
                   </td>
                 </tr>
               ))}
+              {bienesFiltrados.length === 0 && (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '20px', color: '#666' }}>No se encontraron bienes registrados.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -151,7 +224,6 @@ export default function AdministrarBienes() {
         <div className="modal-overlay">
           <div className="modal-card">
             
-            {/* Ícono de Advertencia SVG */}
             <div className="modal-icon">
               <svg width="36" height="36" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -159,7 +231,7 @@ export default function AdministrarBienes() {
             </div>
 
             <h3>¿Eliminar registro?</h3>
-            <p>Estás a punto de borrar el bien <strong>{bienAEliminar.codigo}</strong> asignado a <strong>{bienAEliminar.custodio}</strong>.<br/>Esta acción no se puede deshacer.</p>
+            <p>Estás a punto de borrar el bien <strong>{bienAEliminar.codigo}</strong> asignado a <strong>{bienAEliminar.custodio}</strong> de la base de datos.<br/>Esta acción no se puede deshacer.</p>
             
             <div className="modal-actions">
               <button className="btn-cancel" onClick={() => setBienAEliminar(null)}>

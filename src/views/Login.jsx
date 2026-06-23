@@ -1,4 +1,3 @@
-// src/views/Login.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -8,16 +7,30 @@ export default function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (usuario === 'admin' && password === 'admin123') {
-      localStorage.setItem('rol', 'Administrador');
-      navigate('/dashboard'); 
-    } else if (usuario === 'usuario' && password === 'usuario123') {
-      localStorage.setItem('rol', 'Docente');
-      navigate('/dashboard');
-    } else {
-      setError('Credenciales incorrectas. Intente: admin/admin123 o usuario/usuario123');
+    
+    try {
+      const response = await fetch('http://localhost:8000/api/login/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: usuario, password: password })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Guardamos el token y el rol de forma segura en el navegador
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('rol', data.rol);
+        localStorage.setItem('username', data.username);
+        
+        navigate('/dashboard'); 
+      } else {
+        setError('Usuario o contraseña incorrectos');
+      }
+    } catch (error) {
+      console.error('Error al conectar:', error);
+      setError('Error de conexión con el servidor (¿Django está corriendo?)');
     }
   };
 
@@ -27,11 +40,23 @@ export default function Login() {
         <h2>Iniciar Sesión</h2>
         <div className="form-group">
           <label>Usuario</label>
-          <input type="text" value={usuario} onChange={(e) => setUsuario(e.target.value)} placeholder="Ingrese usuario"/>
+          <input 
+            type="text" 
+            value={usuario} 
+            onChange={(e) => setUsuario(e.target.value)} 
+            placeholder="Ingrese usuario"
+            required
+          />
         </div>
         <div className="form-group">
           <label>Contraseña</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Ingrese contraseña"/>
+          <input 
+            type="password" 
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
+            placeholder="Ingrese contraseña"
+            required
+          />
         </div>
         {error && <div className="error-msg" style={{color: 'red', marginBottom: '15px', fontSize: '14px'}}>{error}</div>}
         <button type="submit" className="btn-primary">Ingresar</button>

@@ -1,29 +1,55 @@
 import { useState } from 'react';
 
-// Función nativa del navegador para hashear la contraseña
-async function hashPassword(password) {
-  const msgBuffer = new TextEncoder().encode(password);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
 export default function CrearUsuarios() {
+  const userRol = localStorage.getItem('rol');
+  const token = localStorage.getItem('token');
   const [usuario, setUsuario] = useState({ cedula: '', nombre: '', email: '', password: '', rol: 'Usuario' });
+
+  if (userRol !== 'Administrador') {
+    return (
+      <div className="view-card" style={{ textAlign: 'center', marginTop: '40px', padding: '40px' }}>
+        <div style={{ fontSize: '50px', marginBottom: '15px' }}>⚠️</div>
+        <h2 style={{ color: 'var(--espe-red)', fontWeight: '700' }}>Acceso Denegado</h2>
+        <p style={{ color: '#5f6f68', margin: '10px 0 25px' }}>
+          No dispones de los permisos de Administrador requeridos para crear usuarios.
+        </p>
+      </div>
+    );
+  }
 
   const handleCrear = async (e) => {
     e.preventDefault();
-    const passwordHasheada = await hashPassword(usuario.password);
     
     const datosAEnviar = {
-      ...usuario,
-      password: passwordHasheada
+      username: usuario.cedula,
+      cedula: usuario.cedula,
+      first_name: usuario.nombre,
+      email: usuario.email,
+      password: usuario.password,
+      rol: usuario.rol === 'Docente' ? 'Docente' : 'Administrador'
     };
+    try {
+      const response = await fetch('http://localhost:8000/api/usuarios/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify(datosAEnviar)
+      });
 
-    console.log("Datos encriptados a enviar a la BD:", datosAEnviar);
-    alert(`Usuario ${usuario.nombre} creado correctamente.\n(Revisa la consola para ver el Hash)`);
-    
-    setUsuario({ cedula: '', nombre: '', email: '', password: '', rol: 'Usuario' });
+      if (response.ok) {
+        alert(`Usuario ${usuario.nombre} creado correctamente en la Base de Datos.`);
+        setUsuario({ cedula: '', nombre: '', email: '', password: '', rol: 'Usuario' });
+      } else {
+        const errorData = await response.json();
+        console.error("Detalle del error:", errorData);
+        alert('Error al crear usuario. Revisa que la Cédula no esté registrada ya.');
+      }
+    } catch (error) {
+      console.error('Error de conexión:', error);
+      alert('Error de red. Asegúrate de que el backend de Django esté encendido.');
+    }
   };
 
   return (
@@ -93,7 +119,7 @@ export default function CrearUsuarios() {
                 borderRadius: '10px', outline: 'none', backgroundColor: '#fff', color: '#333'
               }}
             >
-              <option value="Usuario">Usuario / Estudiante</option>
+              <option value="Docente">Docente</option>
               <option value="Administrador">Administrador</option>
             </select>
           </div>
