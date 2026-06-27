@@ -103,6 +103,16 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Password Hashers - Bcrypt as primary algorithm for credential integrity
+# https://docs.djangoproject.com/en/6.0/ref/settings/#password-hashers
+
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',  # Algoritmo principal (Bcrypt)
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+]
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
@@ -132,3 +142,4 @@ REST_FRAMEWORK={
         'rest_framework.authentication.TokenAuthentication',
     ],
 }
+
