@@ -6,7 +6,6 @@ export default function ConsultarBienes() {
   const [codigo, setCodigo] = useState('');
   const token = localStorage.getItem('token');
 
-  // 1. CARGAR DATOS DE DJANGO
   useEffect(() => {
     if (token) {
       fetch('http://localhost:8000/api/bienes/', {
@@ -24,14 +23,12 @@ export default function ConsultarBienes() {
     }
   }, [token]);
 
-  // 2. FILTRAR POR CÓDIGO (Como tenías originalmente)
   const resultados = useMemo(() => {
     const valor = codigo.trim().toLowerCase();
-    if (!valor) return []; // Si está vacío, no muestra resultados
+    if (!valor) return [];
     return bienesBD.filter(bien => bien.codigo.toLowerCase().includes(valor));
   }, [codigo, bienesBD]);
 
-  // 3. EXPORTAR A EXCEL
   const descargarExcel = (registros) => {
     const datosFormateados = registros.map(item => ({
       'Código': item.codigo,
