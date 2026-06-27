@@ -30,13 +30,15 @@ export default function Login() {
       const data = await response.json();
 
       if (response.ok) {
-        const data = await response.json();
-        // Guardamos el token y el rol de forma segura en el navegador
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('rol', data.rol);
-        localStorage.setItem('username', data.username);
-        
-        navigate('/dashboard'); 
+        if (data.mfa_required) {
+          setMfaRequired(true);
+          setQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(data.provisioning_url)}`);
+        } else {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('rol', data.rol);
+          localStorage.setItem('username', data.username);
+          navigate('/dashboard'); 
+        }
       } else {
         setError(data.error || 'Usuario o contraseña incorrectos');
       }
