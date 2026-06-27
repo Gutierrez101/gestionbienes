@@ -12,11 +12,6 @@ from .models import Bien, Usuario
 from .serializers import BienSerializer
 from rest_framework import serializers
 
-from cryptography.fernet import Fernet
-
-KERBEROS_KDC_KEY = Fernet.generate_key()
-cipher_suite = Fernet(KERBEROS_KDC_KEY)
-
 class UsuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
