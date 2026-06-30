@@ -19,6 +19,7 @@ body {
   color: var(--text-dark);
 }
 
+
 /* estilo del login */
 .login-page {
   display: flex;
