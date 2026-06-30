@@ -56,6 +56,33 @@ export default function Dashboard() {
         <div style={{ padding: '20px', color: '#5f6f68' }}>
           Has ingresado correctamente como <strong>{rol}</strong>. Selecciona una opción del menú de la izquierda para comenzar a trabajar.
         </div>
+
+        <div className="framework-section">
+          <div className="table-header">
+            <div>
+              <h3>Marcos de seguridad</h3>
+              <p>Referencias operativas para control, detección y respuesta.</p>
+            </div>
+          </div>
+          <div className="framework-grid">
+            <div className="framework-card">
+              <h4>MITRE ATT&CK</h4>
+              <ul>
+                <li>Mapeo de tácticas y técnicas de ataque.</li>
+                <li>Soporte para priorizar detecciones y respuestas.</li>
+                <li>Base para evaluar riesgos del inventario y usuarios.</li>
+              </ul>
+            </div>
+            <div className="framework-card">
+              <h4>NIST CSF 2.0</h4>
+              <ul>
+                <li>Govern, Identify, Protect, Detect, Respond y Recover.</li>
+                <li>Orientación para fortalecer controles y continuidad.</li>
+                <li>Alineación con buenas prácticas de gobierno digital.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
