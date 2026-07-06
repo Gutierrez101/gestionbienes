@@ -40,10 +40,9 @@ class LoginView(APIView):
         if not user:
             return Response({'error': 'Credenciales inválidas'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Generar u obtener el Token DRF oficial para el usuario
         token, _ = Token.objects.get_or_create(user=user)
 
-        # Simulación complementaria de seguridad local
+        # Mantenemos tus simulaciones de seguridad local intactas
         access_token_bytes = hashlib.sha256(f"{username}{time.time()}".encode()).digest()
         oauth_access_token = base64.b64encode(access_token_bytes).decode('utf-8')
         timestamp_actual = str(int(time.time()))
