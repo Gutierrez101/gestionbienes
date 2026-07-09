@@ -40,21 +40,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
-
-    #Auth y OAuth
-    'dj_rest_auth',
-    'django.contrib.sites',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
     'inventario',
 ]
-
-SITE_ID=1
-
-SOCIALACCOUNT_EMAIL_VERIFICATION='none'
-SOCIALACCOUNT_EMAIL_REQUIRED=True
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -63,9 +50,10 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'inventario.middleware.AuditoriaMiddleware',  # NIST AU-2: Auditoría
+    'inventario.middleware.SeguridadHeadersMiddleware',  # NIST SC: Headers de seguridad
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -157,9 +145,54 @@ REST_FRAMEWORK={
     ],
 }
 
-PASSWORD_HASHERS = [
-    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
-    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
-    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
-    'django.contrib.auth.hashers.Argon2PasswordHasher',
+# ============================================
+# NIST Cybersecurity Framework Controls
+# ============================================
+
+# NIST AC: Control de Acceso
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:8000",
 ]
+
+# NIST SC: Protección de Comunicaciones
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_SECURITY_POLICY = {
+    "default-src": ("'self'",),
+    "script-src": ("'self'", "'unsafe-inline'"),
+    "style-src": ("'self'", "'unsafe-inline'"),
+    "img-src": ("'self'", "data:", "https:"),
+}
+
+# NIST SI: Integridad de Datos y Validación
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5 MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880
+
+# Logging para NIST AU (Auditoría)
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': BASE_DIR / 'logs' / 'auditoria.log',
+            'maxBytes': 1024000,
+            'backupCount': 3,
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'inventario': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

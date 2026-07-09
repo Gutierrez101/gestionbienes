@@ -1,25 +1,17 @@
 # backend/inventario/views.py
-import pyotp
-import hashlib
-import base64
-import time
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, BasePermission
+from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
-from .models import Bien, Usuario
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from .models import Bien, Usuario, AuditoriaLog
 from .serializers import BienSerializer
 from rest_framework import serializers
+from inventario.middleware import get_client_ip
 
-from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
-from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-from dj_rest_auth.registration.views import SocialLoginView
-
-from cryptography.fernet import Fernet
-
-KERBEROS_KDC_KEY = Fernet.generate_key()
-cipher_suite = Fernet(KERBEROS_KDC_KEY)
 
 class UsuarioSerializer(serializers.ModelSerializer):
     class Meta:
@@ -41,50 +33,103 @@ class LoginView(APIView):
     def post(self, request):
         username = request.data.get('username')
         password = request.data.get('password')
-        totp_code = request.data.get('totp_code')
 
         user = authenticate(username=username, password=password)
         if not user:
             return Response({'error': 'Credenciales inválidas'}, status=status.HTTP_400_BAD_REQUEST)
 
-        raw_bytes = hashlib.sha256(username.encode()).digest()
-        mfa_secret = base64.b32encode(raw_bytes).decode('utf-8')[:32].replace('1','2').replace('0','3').replace('8','4').replace('9','5')
-        totp = pyotp.TOTP(mfa_secret)
+        token, created = Token.objects.get_or_create(user=user)
+        
+        # NIST AU-2: Registrar login exitoso
+        ip = get_client_ip(request)
+        AuditoriaLog.objects.create(
+            usuario=user,
+            accion='LOGIN',
+            tabla='auth',
+            ip_address=ip,
+            user_agent=request.META.get('HTTP_USER_AGENT', '')[:500],
+            detalles='Login exitoso'
+        )
+        
+        return Response({
+            'token': token.key,
+            'username': user.username,
+            'rol': getattr(user, 'rol', 'Docente')
+        }, status=status.HTTP_200_OK)
 
-        if not totp_code:
-            provisioning_url = totp.provisioning_uri(name=user.username, issuer_name="GestionBienes_ESPE")
-            return Response({
-                'mfa_required': True,
-                'provisioning_url': provisioning_url,
-                'message': 'Se requiere el segundo factor de autenticación (MFA).'
-            }, status=status.HTTP_200_OK)
+class CrearUsuarioView(APIView):
+    """NIST IA-5: Gestión de Autenticación"""
+    permission_classes = [IsAdministrador]
 
-        if totp.verify(totp_code, valid_window=1):
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        email = request.data.get('email')
+        rol = request.data.get('rol', 'Docente')
+        cedula = request.data.get('cedula')
+        first_name = request.data.get('first_name', '')
+        last_name = request.data.get('last_name', '')
+
+        if not username or not password:
+            return Response(
+                {'error': 'Usuario y contraseña son requeridos'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # NIST IA-5: Validar contraseña fuerte
+        try:
+            validate_password(password, user=Usuario(username=username))
+        except ValidationError as e:
+            return Response(
+                {'error': 'Contraseña no cumple requisitos de seguridad: ' + str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Verificar usuario no exista
+        if Usuario.objects.filter(username=username).exists():
+            return Response(
+                {'error': 'El usuario ya existe'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            user = Usuario.objects.create_user(
+                username=username,
+                password=password,
+                email=email,
+                rol=rol,
+                cedula=cedula,
+                first_name=first_name,
+                last_name=last_name
+            )
             
-            access_token_bytes = hashlib.sha256(f"{username}{time.time()}".encode()).digest()
-            oauth_access_token = base64.b64encode(access_token_bytes).decode('utf-8')
-            timestamp_actual = str(int(time.time()))
-            ticket_data = f"REALM=ESPE.EDU.EC|PRINCIPAL={username}|AUTH_TIME={timestamp_actual}"
-            kerberos_ticket_encrypted = cipher_suite.encrypt(ticket_data.encode()).decode('utf-8')
+            # NIST AU-2: Registrar creación de usuario
+            ip = get_client_ip(request)
+            AuditoriaLog.objects.create(
+                usuario=request.user,
+                accion='CREATE',
+                tabla='usuario',
+                objeto_id=user.id,
+                ip_address=ip,
+                user_agent=request.META.get('HTTP_USER_AGENT', '')[:500],
+                detalles=f'Usuario creado: {username} con rol {rol}'
+            )
             
             return Response({
-                'authentication_status': 'SUCCESS',
-                'username': user.username,
-                'rol': getattr(user, 'rol', 'Administrador'),
-                'oauth_2.0': {
-                    'token_type': 'Bearer',
-                    'access_token': f"eyXo.{oauth_access_token}",
-                    'expires_in': 3600
-                },
-                'kerberos_auth': {
-                    'realm': 'ESPE.EDU.EC',
-                    'service_principal': 'HTTP/localhost@ESPE.EDU.EC',
-                    'ticket_tgs_encrypted': kerberos_ticket_encrypted,
-                    'anti_replay_timestamp': timestamp_actual
+                'mensaje': 'Usuario creado exitosamente',
+                'usuario': {
+                    'id': user.id,
+                    'username': user.username,
+                    'rol': user.rol,
+                    'email': user.email
                 }
-            }, status=status.HTTP_200_OK)
-        else:
-            return Response({'error': 'Código MFA incorrecto o expirado'}, status=status.HTTP_400_BAD_REQUEST)
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Error creando usuario: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class BienViewSet(viewsets.ModelViewSet):
     queryset = Bien.objects.all()
@@ -95,8 +140,3 @@ class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
     permission_classes = [IsAdministrador]
-
-class GoogleLogin(SocialLoginView):
-    adapter_class=GoogleOAuth2Adapter
-    callback_url="http://localhost:5173"
-    client_class=OAuth2Client
