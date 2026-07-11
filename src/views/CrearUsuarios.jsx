@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { API_BASE_URL } from '../apiConfig';
 
 export default function CrearUsuarios() {
   const userRol = localStorage.getItem('rol');
@@ -29,7 +30,7 @@ export default function CrearUsuarios() {
       rol: usuario.rol === 'Docente' ? 'Docente' : 'Administrador'
     };
     try {
-      const response = await fetch('http://localhost:8000/api/usuarios/', {
+      const response = await fetch(`${API_BASE_URL}/api/usuarios/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

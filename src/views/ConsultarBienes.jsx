@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import * as XLSX from 'xlsx';
+import { API_BASE_URL } from '../apiConfig';
 
 export default function ConsultarBienes() {
   const [bienesBD, setBienesBD] = useState([]);
@@ -9,7 +10,7 @@ export default function ConsultarBienes() {
   // 1. CARGAR DATOS DE DJANGO
   useEffect(() => {
     if (token) {
-      fetch('http://localhost:8000/api/bienes/', {
+      fetch(`${API_BASE_URL}/api/bienes/`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

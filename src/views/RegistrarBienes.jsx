@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
+import { API_BASE_URL } from '../apiConfig';
 
 export default function AdministrarBienes() {
   const [bienes, setBienes] = useState([]);
@@ -29,7 +30,7 @@ export default function AdministrarBienes() {
 
   const fetchBienes = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/bienes/', {
+      const response = await fetch(`${API_BASE_URL}/api/bienes/`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -77,8 +78,8 @@ export default function AdministrarBienes() {
 
     try {
       const url = editandoId 
-        ? `http://localhost:8000/api/bienes/${editandoId}/` 
-        : 'http://localhost:8000/api/bienes/';
+        ? `${API_BASE_URL}/api/bienes/${editandoId}/` 
+        : `${API_BASE_URL}/api/bienes/`;
       const method = editandoId ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -115,7 +116,7 @@ export default function AdministrarBienes() {
 
   const confirmarEliminacion = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/api/bienes/${bienAEliminar.id}/`, {
+      const response = await fetch(`${API_BASE_URL}/api/bienes/${bienAEliminar.id}/`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Token ${token}`

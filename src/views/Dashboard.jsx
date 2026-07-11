@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { API_BASE_URL } from '../apiConfig';
 
 export default function Dashboard() {
   const [rol, setRol] = useState('');
@@ -11,7 +12,7 @@ export default function Dashboard() {
     // Consulta a Django para saber cuántos bienes existen en total
     const token = localStorage.getItem('token');
     if (token) {
-      fetch('http://localhost:8000/api/bienes/', {
+      fetch(`${API_BASE_URL}/api/bienes/`, {
         headers: { 'Authorization': `Token ${token}` }
       })
       .then(res => res.json())

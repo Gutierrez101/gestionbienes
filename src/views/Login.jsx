@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../apiConfig';
 
 export default function Login() {
   const [usuario, setUsuario] = useState('');
@@ -9,28 +10,27 @@ export default function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    
+
     try {
-      const response = await fetch('http://localhost:8000/api/login/', {
+      const response = await fetch(`${API_BASE_URL}/api/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: usuario, password: password })
+        body: JSON.stringify({ username: usuario, password })
       });
 
       if (response.ok) {
         const data = await response.json();
-        // Guardamos el token y el rol de forma segura en el navegador
         localStorage.setItem('token', data.token);
         localStorage.setItem('rol', data.rol);
         localStorage.setItem('username', data.username);
-        
-        navigate('/dashboard'); 
+
+        navigate('/dashboard');
       } else {
         setError('Usuario o contraseña incorrectos');
       }
     } catch (error) {
       console.error('Error al conectar:', error);
-      setError('Error de conexión con el servidor (¿Django está corriendo?)');
+      setError('Error de conexión con el servidor.');
     }
   };
 
