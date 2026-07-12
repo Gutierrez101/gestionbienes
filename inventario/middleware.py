@@ -50,13 +50,33 @@ class AuditoriaMiddleware:
                 }
                 accion = accion_map.get(request.method, 'READ')
                 
-                AuditoriaLog.objects.create(
+                mitre_tactic = 'Persistence'
+                mitre_technique = 'T1078'
+
+                if accion == 'READ':
+                    mitre_tactic = 'Discovery'
+                    mitre_technique = 'T1082'
+                elif accion == 'UPDATE':
+                    mitre_tactic = 'Defense Evasion'
+                    mitre_technique = 'T1562'
+                elif accion == 'DELETE':
+                    mitre_tactic = 'Impact'
+                    mitre_technique = 'T1485'
+
+                audit = AuditoriaLog.objects.create(
                     usuario=request.user,
                     accion=accion,
                     tabla=request.path[:100],
                     ip_address=ip,
                     user_agent=user_agent,
-                    detalles=f"Status: {response.status_code}"
+                    detalles=f"Status: {response.status_code}",
+                    mitre_tactic=mitre_tactic,
+                    mitre_technique=mitre_technique,
+                )
+                logger.info(
+                    f"Auditoría creada: usuario={request.user} acción={accion} path={request.path} "
+                    f"status={response.status_code} mitre_tactic={mitre_tactic} "
+                    f"mitre_technique={mitre_technique} id={audit.id}"
                 )
             except Exception as e:
                 logger.error(f"Error registrando auditoría: {str(e)}")

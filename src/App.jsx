@@ -12,6 +12,7 @@ import CrearUsuarios from './views/CrearUsuarios';
 import RegistrarBienes from './views/RegistrarBienes';
 import CargarDatos from './views/CargarDatos';
 import ConsultarBienes from './views/ConsultarBienes';
+import Blockchain from './views/Blockchain';
 
 // Componente Guardián para proteger rutas por Rol
 function ProtectedRoute({ children, allowedRoles }) {
@@ -51,6 +52,8 @@ export default function App() {
         {/* Rutas Compartidas y Protegidas */}
         <Route element={<AdminLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
+          
+          <Route path="/blockchain" element={<Blockchain />} />
           
           <Route path="/crear-usuarios" element={
             <ProtectedRoute allowedRoles={['Administrador']}>

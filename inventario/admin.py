@@ -10,10 +10,13 @@ class CustomUserAdmin(UserAdmin):
 
 class AuditoriaLogAdmin(admin.ModelAdmin):
     """NIST AU-2: Panel de auditoría"""
-    list_display = ('usuario', 'accion', 'tabla', 'ip_address', 'timestamp')
-    list_filter = ('accion', 'tabla', 'timestamp', 'usuario')
-    search_fields = ('usuario__username', 'ip_address', 'tabla')
-    readonly_fields = ('usuario', 'accion', 'tabla', 'objeto_id', 'ip_address', 'user_agent', 'detalles', 'timestamp')
+    list_display = ('usuario', 'accion', 'tabla', 'mitre_tactic', 'mitre_technique', 'ip_address', 'timestamp')
+    list_filter = ('accion', 'tabla', 'mitre_tactic', 'mitre_technique', 'timestamp', 'usuario')
+    search_fields = ('usuario__username', 'ip_address', 'tabla', 'mitre_tactic', 'mitre_technique')
+    readonly_fields = (
+        'usuario', 'accion', 'tabla', 'objeto_id', 'ip_address', 'user_agent',
+        'detalles', 'mitre_tactic', 'mitre_technique', 'timestamp'
+    )
     
     def has_delete_permission(self, request):
         return False  # No permitir borrar logs de auditoría

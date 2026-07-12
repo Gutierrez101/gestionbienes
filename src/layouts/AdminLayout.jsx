@@ -50,6 +50,11 @@ export default function AdminLayout() {
               Consultar Bienes
             </NavLink>
           </li>
+          <li>
+            <NavLink to="/blockchain" className={({ isActive }) => isActive ? 'sidebar-button is-active' : 'sidebar-button'}>
+              Blockchain
+            </NavLink>
+          </li>
         </ul>
 
         <button className="btn-logout" onClick={handleLogout}>

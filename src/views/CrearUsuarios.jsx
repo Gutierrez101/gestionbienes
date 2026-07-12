@@ -1,54 +1,121 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function CrearUsuarios() {
   const userRol = localStorage.getItem('rol');
   const token = localStorage.getItem('token');
-  const [usuario, setUsuario] = useState({ cedula: '', nombre: '', email: '', password: '', rol: 'Usuario' });
+  const [usuario, setUsuario] = useState({ cedula: '', nombre: '', email: '', password: '', rol: 'Docente' });
+  const [usuarios, setUsuarios] = useState([]);
+  const [editandoId, setEditandoId] = useState(null);
+  const [loadingUsuarios, setLoadingUsuarios] = useState(false);
 
-  if (userRol !== 'Administrador') {
-    return (
-      <div className="view-card" style={{ textAlign: 'center', marginTop: '40px', padding: '40px' }}>
-        <div style={{ fontSize: '50px', marginBottom: '15px' }}>⚠️</div>
-        <h2 style={{ color: 'var(--espe-red)', fontWeight: '700' }}>Acceso Denegado</h2>
-        <p style={{ color: '#5f6f68', margin: '10px 0 25px' }}>
-          No dispones de los permisos de Administrador requeridos para crear usuarios.
-        </p>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (userRol === 'Administrador') {
+      cargarUsuarios();
+    }
+  }, [userRol]);
+
+  const cargarUsuarios = async () => {
+    if (!token) return;
+    setLoadingUsuarios(true);
+    try {
+      const response = await fetch('http://localhost:8000/api/usuarios/', {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Token ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error('No se pudieron cargar los usuarios');
+      const data = await response.json();
+      setUsuarios(data);
+    } catch (error) {
+      console.error(error);
+      alert('Error al cargar usuarios. Comprueba que el backend esté corriendo y el token sea válido.');
+    } finally {
+      setLoadingUsuarios(false);
+    }
+  };
+
+  const limpiarFormulario = () => {
+    setUsuario({ cedula: '', nombre: '', email: '', password: '', rol: 'Docente' });
+    setEditandoId(null);
+  };
 
   const handleCrear = async (e) => {
     e.preventDefault();
-    
+    if (!token) return alert('Debes iniciar sesión con un usuario Administrador.');
+
     const datosAEnviar = {
       username: usuario.cedula,
       cedula: usuario.cedula,
       first_name: usuario.nombre,
       email: usuario.email,
-      password: usuario.password,
-      rol: usuario.rol === 'Docente' ? 'Docente' : 'Administrador'
+      rol: usuario.rol === 'Docente' ? 'Docente' : 'Administrador',
     };
+
+    if (usuario.password.trim() !== '') {
+      datosAEnviar.password = usuario.password;
+    }
+
+    const url = editandoId
+      ? `http://localhost:8000/api/usuarios/${editandoId}/`
+      : 'http://localhost:8000/api/usuarios/';
+    const method = editandoId ? 'PATCH' : 'POST';
+
     try {
-      const response = await fetch('http://localhost:8000/api/usuarios/', {
-        method: 'POST',
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Token ${token}`
+          Authorization: `Token ${token}`,
         },
-        body: JSON.stringify(datosAEnviar)
+        body: JSON.stringify(datosAEnviar),
       });
 
-      if (response.ok) {
-        alert(`Usuario ${usuario.nombre} creado correctamente en la Base de Datos.`);
-        setUsuario({ cedula: '', nombre: '', email: '', password: '', rol: 'Usuario' });
-      } else {
+      if (!response.ok) {
         const errorData = await response.json();
-        console.error("Detalle del error:", errorData);
-        alert('Error al crear usuario. Revisa que la Cédula no esté registrada ya.');
+        console.error('Error API:', errorData);
+        alert(`Error al ${editandoId ? 'editar' : 'crear'} usuario.`);
+        return;
       }
+
+      alert(`Usuario ${editandoId ? 'actualizado' : 'creado'} correctamente.`);
+      limpiarFormulario();
+      cargarUsuarios();
     } catch (error) {
-      console.error('Error de conexión:', error);
-      alert('Error de red. Asegúrate de que el backend de Django esté encendido.');
+      console.error(error);
+      alert('Error de conexión con el backend.');
+    }
+  };
+
+  const handleEditar = (item) => {
+    setUsuario({
+      cedula: item.cedula || item.username || '',
+      nombre: item.first_name || '',
+      email: item.email || '',
+      password: '',
+      rol: item.rol || 'Docente',
+    });
+    setEditandoId(item.id);
+  };
+
+  const handleEliminar = async (id) => {
+    if (!token) return alert('Debes iniciar sesión con un usuario Administrador.');
+    const confirmado = window.confirm('¿Eliminar este usuario? Esta acción no se puede deshacer.');
+    if (!confirmado) return;
+
+    try {
+      const response = await fetch(`http://localhost:8000/api/usuarios/${id}/`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Token ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error('No se pudo eliminar el usuario');
+      alert('Usuario eliminado correctamente.');
+      cargarUsuarios();
+    } catch (error) {
+      console.error(error);
+      alert('No se pudo eliminar el usuario.');
     }
   };
 
@@ -99,13 +166,13 @@ export default function CrearUsuarios() {
           </div>
 
           <div className="form-group">
-            <label>Contraseña</label>
+            <label>{editandoId ? 'Contraseña (opcional)' : 'Contraseña'}</label>
             <input 
               type="password" 
               value={usuario.password} 
               onChange={(e) => setUsuario({...usuario, password: e.target.value})} 
-              placeholder="Asigne una contraseña"
-              required 
+              placeholder={editandoId ? 'Dejar en blanco para mantener la contraseña actual' : 'Asigne una contraseña'}
+              required={!editandoId}
             />
           </div>
 
@@ -125,9 +192,64 @@ export default function CrearUsuarios() {
           </div>
 
           <button type="submit" className="btn-primary" style={{ marginTop: '10px' }}>
-            Registrar Cuenta Segura
+            {editandoId ? 'Actualizar Usuario' : 'Registrar Cuenta Segura'}
           </button>
+          {editandoId && (
+            <button
+              type="button"
+              className="btn-secondary"
+              style={{ marginLeft: '10px' }}
+              onClick={limpiarFormulario}
+            >
+              Cancelar edición
+            </button>
+          )}
         </form>
+      </div>
+
+      <div>
+        <h3>Lista de usuarios</h3>
+        {loadingUsuarios ? (
+          <p>Cargando usuarios...</p>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Cédula</th>
+                  <th>Nombre</th>
+                  <th>Email</th>
+                  <th>Rol</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {usuarios.map((item) => (
+                  <tr key={item.id} style={{ borderTop: '1px solid #e2e8f0' }}>
+                    <td>{item.id}</td>
+                    <td>{item.cedula || item.username}</td>
+                    <td>{item.first_name || '-'}</td>
+                    <td>{item.email || '-'}</td>
+                    <td>{item.rol || '-'}</td>
+                    <td>
+                      <button className="btn-small btn-edit" onClick={() => handleEditar(item)}>
+                        Editar
+                      </button>
+                      <button
+                        className="btn-small btn-delete"
+                        onClick={() => handleEliminar(item.id)}
+                        style={{ marginLeft: '8px' }}
+                      >
+                        Eliminar
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

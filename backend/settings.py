@@ -179,10 +179,23 @@ LOGGING = {
         },
     },
     'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
         'file': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': BASE_DIR / 'logs' / 'auditoria.log',
+            'filename': BASE_DIR / 'auditoria.log',
+            'maxBytes': 1024000,
+            'backupCount': 3,
+            'formatter': 'verbose',
+        },
+        'file_txt': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': BASE_DIR / 'logs.txt',
             'maxBytes': 1024000,
             'backupCount': 3,
             'formatter': 'verbose',
@@ -190,9 +203,17 @@ LOGGING = {
     },
     'loggers': {
         'inventario': {
-            'handlers': ['file'],
+            'handlers': ['console', 'file', 'file_txt'],
             'level': 'INFO',
             'propagate': False,
         },
     },
 }
+ 
+# Email alerts (development: print to console)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+ADMINS = [('Admin', 'admin@example.com')]
+
+# Failed login alert threshold
+FAILED_LOGIN_THRESHOLD = 5
+FAILED_LOGIN_WINDOW = 300  # seconds

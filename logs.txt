@@ -1,0 +1,31 @@
+INFO 2026-07-12 14:24:35,771 middleware 25848 1064 Auditoría creada: usuario=testuser - Administrador acción=READ path=/api/bienes/ status=200 mitre_tactic=Discovery mitre_technique=T1082 id=67
+INFO 2026-07-12 14:24:35,799 middleware 25848 1064 Auditoría creada: usuario=testuser - Administrador acción=READ path=/api/bienes/ status=200 mitre_tactic=Discovery mitre_technique=T1082 id=68
+INFO 2026-07-12 14:24:44,123 views 25848 1064 ESP - Login exitoso: testuser desde 127.0.0.1 mitre_tactic=Credential Access mitre_technique=T1110
+INFO 2026-07-12 14:24:44,172 middleware 25848 1064 Auditoría creada: usuario=testuser - Administrador acción=READ path=/api/bienes/ status=200 mitre_tactic=Discovery mitre_technique=T1082 id=70
+INFO 2026-07-12 14:24:44,196 middleware 25848 1064 Auditoría creada: usuario=testuser - Administrador acción=READ path=/api/bienes/ status=200 mitre_tactic=Discovery mitre_technique=T1082 id=71
+WARNING 2026-07-12 14:26:33,556 views 25848 1064 ESP - Login fallido: usuario=duval ip=127.0.0.1 mitre_tactic=Credential Access mitre_technique=T1110
+WARNING 2026-07-12 14:26:34,996 views 25848 1064 ESP - Login fallido: usuario=duval ip=127.0.0.1 mitre_tactic=Credential Access mitre_technique=T1110
+WARNING 2026-07-12 14:26:35,779 views 25848 1064 ESP - Login fallido: usuario=duval ip=127.0.0.1 mitre_tactic=Credential Access mitre_technique=T1110
+WARNING 2026-07-12 14:26:36,468 views 25848 1064 ESP - Login fallido: usuario=duval ip=127.0.0.1 mitre_tactic=Credential Access mitre_technique=T1110
+WARNING 2026-07-12 14:26:37,137 views 25848 1064 ESP - Login fallido: usuario=duval ip=127.0.0.1 mitre_tactic=Credential Access mitre_technique=T1110
+WARNING 2026-07-12 14:26:37,137 views 25848 1064 ESP ALERT - Alerta: 5 intentos fallidos de login desde 127.0.0.1
+INFO 2026-07-12 14:27:35,656 views 25848 1064 ESP - Login exitoso: testuser desde 127.0.0.1 mitre_tactic=Credential Access mitre_technique=T1110
+INFO 2026-07-12 14:27:35,694 middleware 25848 1064 Auditoría creada: usuario=testuser - Administrador acción=READ path=/api/bienes/ status=200 mitre_tactic=Discovery mitre_technique=T1082 id=78
+INFO 2026-07-12 14:27:35,723 middleware 25848 1064 Auditoría creada: usuario=testuser - Administrador acción=READ path=/api/bienes/ status=200 mitre_tactic=Discovery mitre_technique=T1082 id=79
+INFO 2026-07-12 14:27:58,711 middleware 25848 1064 Auditoría creada: usuario=testuser - Administrador acción=CREATE path=/api/usuarios/ status=201 mitre_tactic=Persistence mitre_technique=T1078 id=80
+INFO 2026-07-12 14:28:11,904 views 25848 1064 ESP - Login exitoso: 0550194443 desde 127.0.0.1 mitre_tactic=Credential Access mitre_technique=T1110
+INFO 2026-07-12 14:28:11,955 middleware 25848 1064 Auditoría creada: usuario=0550194443 - Administrador acción=READ path=/api/bienes/ status=200 mitre_tactic=Discovery mitre_technique=T1082 id=82
+INFO 2026-07-12 14:28:11,984 middleware 25848 1064 Auditoría creada: usuario=0550194443 - Administrador acción=READ path=/api/bienes/ status=200 mitre_tactic=Discovery mitre_technique=T1082 id=83
+INFO 2026-07-12 16:16:34,408 middleware 25848 19092 Auditoría creada: usuario=0550194443 - Administrador acción=READ path=/api/bienes/ status=200 mitre_tactic=Discovery mitre_technique=T1082 id=84
+INFO 2026-07-12 16:16:34,438 middleware 25848 19092 Auditoría creada: usuario=0550194443 - Administrador acción=READ path=/api/bienes/ status=200 mitre_tactic=Discovery mitre_technique=T1082 id=85
+INFO 2026-07-12 16:16:37,040 middleware 25848 19092 Auditoría creada: usuario=0550194443 - Administrador acción=READ path=/api/bienes/ status=200 mitre_tactic=Discovery mitre_technique=T1082 id=86
+INFO 2026-07-12 16:16:37,068 middleware 25848 19092 Auditoría creada: usuario=0550194443 - Administrador acción=READ path=/api/bienes/ status=200 mitre_tactic=Discovery mitre_technique=T1082 id=87
+INFO 2026-07-12 16:16:42,231 middleware 25848 19092 Auditoría creada: usuario=0550194443 - Administrador acción=READ path=/api/bienes/ status=200 mitre_tactic=Discovery mitre_technique=T1082 id=88
+INFO 2026-07-12 16:16:42,258 middleware 25848 19092 Auditoría creada: usuario=0550194443 - Administrador acción=READ path=/api/bienes/ status=200 mitre_tactic=Discovery mitre_technique=T1082 id=89
+INFO 2026-07-12 16:16:50,580 middleware 25848 17396 Auditoría creada: usuario=0550194443 - Administrador acción=READ path=/api/auditoria-chain/ status=200 mitre_tactic=Discovery mitre_technique=T1082 id=90
+INFO 2026-07-12 16:16:50,676 middleware 25848 17396 Auditoría creada: usuario=0550194443 - Administrador acción=READ path=/api/auditoria-chain/ status=200 mitre_tactic=Discovery mitre_technique=T1082 id=91
+INFO 2026-07-12 16:16:58,114 middleware 25848 17396 Auditoría creada: usuario=0550194443 - Administrador acción=READ path=/api/bienes/ status=200 mitre_tactic=Discovery mitre_technique=T1082 id=92
+INFO 2026-07-12 16:16:58,145 middleware 25848 17396 Auditoría creada: usuario=0550194443 - Administrador acción=READ path=/api/bienes/ status=200 mitre_tactic=Discovery mitre_technique=T1082 id=93
+INFO 2026-07-12 16:20:08,586 middleware 23184 12168 Auditoría creada: usuario=0550194443 - Administrador acción=READ path=/api/usuarios/ status=200 mitre_tactic=Discovery mitre_technique=T1082 id=94
+INFO 2026-07-12 16:33:35,426 middleware 23184 8836 Auditoría creada: usuario=0550194443 - Administrador acción=READ path=/api/usuarios/ status=200 mitre_tactic=Discovery mitre_technique=T1082 id=95
+INFO 2026-07-12 16:33:35,466 middleware 23184 8836 Auditoría creada: usuario=0550194443 - Administrador acción=READ path=/api/usuarios/ status=200 mitre_tactic=Discovery mitre_technique=T1082 id=96
